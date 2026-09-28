@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoomBook — Intelligent Meeting Room Reservation & Conflict Detection</title>
+  <meta name="description" content="Next-generation enterprise meeting room booking platform with real-time conflict detection, check-in verification, and 10-minute no-show auto-release.">
+  
+  <!-- Modern Google Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+  
+  <!-- Header / Navigation -->
+  <nav class="navbar" id="mainNavbar">
+    <div class="brand" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+      <div class="brand-icon">
+        <i class="fa-solid fa-cube"></i>
+      </div>
+      <div class="brand-info">
+        <h1>RoomBook</h1>
+        <p>Conflict-Free Spaces</p>
+      </div>
+    </div>
+
+    <ul class="nav-links">
+      <li><button class="nav-btn active" onclick="switchSection('roomsSection')"><i class="fa-solid fa-door-open"></i> Rooms</button></li>
+      <li><button class="nav-btn" onclick="switchSection('bookingsSection')"><i class="fa-solid fa-calendar-check"></i> Bookings & Check-In</button></li>
+      <li><button class="nav-btn" onclick="switchSection('playgroundSection')"><i class="fa-solid fa-shield-halved"></i> Conflict Playground</button></li>
+      <li><button class="nav-btn" onclick="switchSection('apiDocsSection')"><i class="fa-solid fa-code"></i> API Explorer</button></li>
+    </ul>
+
+    <div class="nav-actions">
+      <div class="live-pulse-badge" title="Auto-Release Scheduler Active (30s interval)">
+        <span class="pulse-dot"></span>
+        <span>Auto-Release Engine</span>
+      </div>
+      <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Hero & Quick Stats Section -->
+  <header class="hero-section">
+    <div class="hero-banner">
+      <div class="hero-content">
+        <div class="hero-tag">
+          <i class="fa-solid fa-bolt"></i> Real-World Scenario 44 • Enterprise Engine
+        </div>
+        <h2 class="hero-title">Meeting Room Booking with Instant Conflict Detection</h2>
+        <p class="hero-desc">
+          Eliminate double-bookings forever. Reserve equipped spaces, enforce strict zero-overlap invariants in the service layer, check in on time, and automatically reclaim abandoned rooms with the 10-minute no-show release rule.
+        </p>
+        <div class="hero-cta-group">
+          <button class="btn btn-primary" onclick="openBookingModal()">
+            <i class="fa-solid fa-plus"></i> Book a Room Now
+          </button>
+          <button class="btn btn-secondary" onclick="triggerAutoReleaseCheck()">
+            <i class="fa-solid fa-clock-rotate-left"></i> Run No-Show Sweep
+          </button>
+          <button class="btn btn-secondary" onclick="switchSection('playgroundSection')">
+            <i class="fa-solid fa-flask"></i> Test Conflict Rules
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live KPI Metrics Grid -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-icon indigo"><i class="fa-solid fa-building"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="statTotalRooms">6</div>
+          <div class="stat-label">Total Rooms</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon emerald"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="statAvailableRooms">6</div>
+          <div class="stat-label">Available Spaces</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon sky"><i class="fa-solid fa-calendar-day"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="statTodayBookings">4</div>
+          <div class="stat-label">Today's Bookings</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon amber"><i class="fa-solid fa-people-roof"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="statActiveMeetings">1</div>
+          <div class="stat-label">In Session Now</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon rose"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <div class="stat-info">
+          <div class="stat-value" id="statAutoReleased">0</div>
+          <div class="stat-label">Slots Saved (No-Shows)</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       SECTION 1: Rooms & Availability Directory
+       ========================================================================= -->
+  <section id="roomsSection" class="content-section">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <h2><i class="fa-solid fa-door-open" style="color: var(--accent-primary);"></i> Meeting Rooms & Amenities</h2>
+        <p>Explore corporate conference rooms, check capacity and equipment, or inspect live day availability.</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openBookingModal()">
+        <i class="fa-solid fa-calendar-plus"></i> New Reservation
+      </button>
+    </div>
+
+    <!-- Filter & Search Controls -->
+    <div class="filter-bar">
+      <div class="search-input-wrap">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="roomSearchInput" class="search-input" placeholder="Search by name, floor, or equipment (e.g. Projector, Whiteboard)..." oninput="debounceFilterRooms()">
+      </div>
+      
+      <div class="filter-group">
+        <span class="filter-label"><i class="fa-solid fa-users"></i> Min Capacity:</span>
+        <select id="capacityFilter" class="select-custom" onchange="filterRooms()">
+          <option value="">Any Capacity</option>
+          <option value="4">4+ People</option>
+          <option value="8">8+ People</option>
+          <option value="12">12+ People</option>
+          <option value="18">18+ People</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <span class="filter-label"><i class="fa-solid fa-filter"></i> Status:</span>
+        <select id="statusFilter" class="select-custom" onchange="filterRooms()">
+          <option value="">All Statuses</option>
+          <option value="AVAILABLE">Available Only</option>
+          <option value="UNDER_MAINTENANCE">Under Maintenance</option>
+        </select>
+      </div>
+
+      <button class="btn btn-secondary btn-sm" onclick="resetRoomFilters()">
+        <i class="fa-solid fa-arrows-rotate"></i> Reset
+      </button>
+    </div>
+
+    <!-- Dynamic Room Cards Container -->
+    <div class="rooms-grid" id="roomsContainer">
+      <!-- Injected via JavaScript -->
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 2: Bookings Management & Check-In Verification
+       ========================================================================= -->
+  <section id="bookingsSection" class="content-section" style="display: none;">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <h2><i class="fa-solid fa-calendar-check" style="color: var(--status-confirmed);"></i> Central Bookings & Check-In Hub</h2>
+        <p>Live schedule with real-time status tracking, 10-minute check-in grace period, and instant slot cancellations.</p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary btn-sm" onclick="triggerAutoReleaseCheck()">
+          <i class="fa-solid fa-bolt"></i> Auto-Release Sweep
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="openBookingModal()">
+          <i class="fa-solid fa-plus"></i> Create Booking
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="bookings-filter-tabs">
+      <button class="tab-btn active" onclick="filterBookingsTab('ALL', this)">All Bookings (<span id="countAll">0</span>)</button>
+      <button class="tab-btn" onclick="filterBookingsTab('CONFIRMED', this)">Confirmed (<span id="countConfirmed">0</span>)</button>
+      <button class="tab-btn" onclick="filterBookingsTab('CHECKED_IN', this)">Checked In (<span id="countCheckedIn">0</span>)</button>
+      <button class="tab-btn" onclick="filterBookingsTab('NO_SHOW', this)">No-Show / Auto-Released (<span id="countNoShow">0</span>)</button>
+      <button class="tab-btn" onclick="filterBookingsTab('CANCELLED', this)">Cancelled (<span id="countCancelled">0</span>)</button>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="bookings-table-container">
+      <table class="bookings-table">
+        <thead>
+          <tr>
+            <th>Meeting Details</th>
+            <th>Room</th>
+            <th>Organizer</th>
+            <th>Time Slot</th>
+            <th>Status</th>
+            <th>Actions / Check-In</th>
+          </tr>
+        </thead>
+        <tbody id="bookingsTableBody">
+          <!-- Injected via JavaScript -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 3: Conflict Detection Playground & Verification Suite
+       ========================================================================= -->
+  <section id="playgroundSection" class="content-section" style="display: none;">
+    <div class="playground-section">
+      <div class="section-title-wrap">
+        <h2><i class="fa-solid fa-shield-halved" style="color: var(--accent-secondary);"></i> Conflict Detection & Business Rules Playground</h2>
+        <p>Interactive testing suite demonstrating the core business rules specified in Use Case #44.</p>
+      </div>
+
+      <div class="playground-grid">
+        <!-- Rule Explanation Column -->
+        <div class="rules-column">
+          <div class="rule-card">
+            <div class="rule-number">1</div>
+            <div class="rule-content">
+              <h4>Zero Overlap Invariant (Conflict Detection)</h4>
+              <p>No two confirmed bookings for the same room may overlap in time. The service layer verifies <code>newStart &lt; existingEnd &amp;&amp; newEnd &gt; existingStart</code> before saving, immediately throwing HTTP 409 Conflict.</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-number">2</div>
+            <div class="rule-content">
+              <h4>Instant Slot Reclamation on Cancellation</h4>
+              <p>When an employee cancels a booking, its status transitions to <code>CANCELLED</code>, freeing the slot immediately for other teams to book without conflict.</p>
+            </div>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-number">3</div>
+            <div class="rule-content">
+              <h4>10-Minute No-Show Grace Period &amp; Auto-Release</h4>
+              <p>Organizers must check in within 10 minutes of meeting start. A background daemon (running every 30s) automatically detects unconfirmed no-shows and releases the room back to public inventory.</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap;">
+            <button class="btn btn-danger" onclick="testConflictScenario()">
+              <i class="fa-solid fa-radiation"></i> Trigger Overlap Conflict Test (HTTP 409)
+            </button>
+            <button class="btn btn-secondary" onclick="testValidBookingScenario()">
+              <i class="fa-solid fa-check"></i> Book Valid Free Slot (HTTP 201)
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Playground Console -->
+        <div class="playground-console">
+          <div class="console-header">
+            <div class="console-dots">
+              <span class="console-dot red"></span>
+              <span class="console-dot yellow"></span>
+              <span class="console-dot green"></span>
+            </div>
+            <span class="console-title">Live Response Inspector</span>
+            <button class="btn btn-secondary btn-sm" onclick="clearConsole()"><i class="fa-solid fa-trash-can"></i> Clear</button>
+          </div>
+          <div class="console-output" id="playgroundConsoleOutput">Click "Trigger Overlap Conflict Test" to test the conflict detection engine...
+The backend will intercept the double-booking and return a structured HTTP 409 response with exact conflict metadata!</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================================
+       SECTION 4: Interactive API Explorer
+       ========================================================================= -->
+  <section id="apiDocsSection" class="content-section" style="display: none;">
+    <div class="section-header">
+      <div class="section-title-wrap">
+        <h2><i class="fa-solid fa-code" style="color: var(--accent-cyan);"></i> REST API Interactive Explorer</h2>
+        <p>Explore and execute live requests against RoomBook backend controllers.</p>
+      </div>
+      <a href="/h2-console" target="_blank" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-database"></i> Open H2 SQL Console
+      </a>
+    </div>
+
+    <div id="apiEndpointsContainer" style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- Populated via JavaScript from /api/docs/endpoints -->
+    </div>
+  </section>
+
+</div>
+
+<!-- =========================================================================
+     MODAL: Create / Edit Booking
+     ========================================================================= -->
+<div class="modal-overlay" id="bookingModalOverlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fa-solid fa-calendar-plus" style="color: var(--accent-primary);"></i>
+        <span>Reserve Meeting Room</span>
+      </div>
+      <button class="modal-close-btn" onclick="closeBookingModal()">&times;</button>
+    </div>
+
+    <form id="bookingForm" onsubmit="handleBookingSubmit(event)">
+      <div class="modal-body">
+        
+        <!-- Real-time Conflict Alert Box -->
+        <div class="conflict-alert" id="conflictAlertBox">
+          <div class="conflict-alert-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <div class="conflict-alert-text">
+            <h5>Scheduling Conflict Detected!</h5>
+            <p id="conflictAlertMessage">This room is already reserved for the chosen time slot.</p>
+          </div>
+        </div>
+
+        <!-- Real-time Slot Available Box -->
+        <div class="slot-ok-alert" id="slotOkAlertBox">
+          <i class="fa-solid fa-circle-check"></i>
+          <span id="slotOkMessage">Great news! This time slot is completely available.</span>
+        </div>
+
+        <!-- Room Selector -->
+        <div class="form-group">
+          <label class="form-label" for="bookingRoomSelect"><i class="fa-solid fa-door-open"></i> Select Room *</label>
+          <select id="bookingRoomSelect" class="form-select" required onchange="triggerLiveConflictCheck()">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <!-- Organizer Selector -->
+        <div class="form-group">
+          <label class="form-label" for="bookingEmployeeSelect"><i class="fa-solid fa-user-tie"></i> Meeting Organizer *</label>
+          <select id="bookingEmployeeSelect" class="form-select" required>
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <!-- Meeting Title -->
+        <div class="form-group">
+          <label class="form-label" for="bookingTitleInput"><i class="fa-solid fa-heading"></i> Meeting Title *</label>
+          <input type="text" id="bookingTitleInput" class="form-input" placeholder="e.g. Q4 Product Roadmap & Sprint Kickoff" required>
+        </div>
+
+        <!-- Date & Times Grid -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="bookingDateInput"><i class="fa-solid fa-calendar-day"></i> Date *</label>
+            <input type="date" id="bookingDateInput" class="form-input" required onchange="triggerLiveConflictCheck()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="bookingAttendeesInput"><i class="fa-solid fa-users"></i> Expected Attendees</label>
+            <input type="number" id="bookingAttendeesInput" class="form-input" min="1" max="50" value="4">
+          </div>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="bookingStartTimeInput"><i class="fa-solid fa-clock"></i> Start Time *</label>
+            <input type="time" id="bookingStartTimeInput" class="form-input" required onchange="triggerLiveConflictCheck()">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="bookingEndTimeInput"><i class="fa-solid fa-clock"></i> End Time *</label>
+            <input type="time" id="bookingEndTimeInput" class="form-input" required onchange="triggerLiveConflictCheck()">
+          </div>
+        </div>
+
+        <!-- Description / Agenda -->
+        <div class="form-group">
+          <label class="form-label" for="bookingDescInput"><i class="fa-solid fa-align-left"></i> Agenda & Notes</label>
+          <textarea id="bookingDescInput" class="form-textarea" rows="2" placeholder="Key topics, remote meeting links, or prep materials..."></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeBookingModal()">Cancel</button>
+        <button type="submit" id="bookingSubmitBtn" class="btn btn-primary">
+          <i class="fa-solid fa-check"></i> Confirm Reservation
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- =========================================================================
+     MODAL: Room Day Schedule Matrix
+     ========================================================================= -->
+<div class="modal-overlay" id="timelineModalOverlay">
+  <div class="modal-card" style="max-width: 720px;">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fa-solid fa-clock" style="color: var(--accent-primary);"></i>
+        <span id="timelineModalTitle">Room Availability Matrix</span>
+      </div>
+      <button class="modal-close-btn" onclick="closeTimelineModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <span style="font-size: 13.5px; color: var(--text-muted);">
+          Select an available slot below to start booking immediately:
+        </span>
+        <input type="date" id="timelineDatePicker" class="form-input" style="width: auto; padding: 6px 12px;" onchange="loadRoomTimelineForDate()">
+      </div>
+
+      <div class="timeline-slots-grid" id="timelineSlotsGrid">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeTimelineModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================================================================
+     MODAL: Cancel Booking Dialog
+     ========================================================================= -->
+<div class="modal-overlay" id="cancelModalOverlay">
+  <div class="modal-card" style="max-width: 480px;">
+    <div class="modal-header">
+      <div class="modal-title">
+        <i class="fa-solid fa-ban" style="color: #f43f5e;"></i>
+        <span>Cancel Reservation</span>
+      </div>
+      <button class="modal-close-btn" onclick="closeCancelModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <p style="font-size: 14px; color: var(--text-main); margin-bottom: 14px;">
+        Are you sure you want to cancel this booking? The room slot will be <strong>immediately freed</strong> for other employees to reserve.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label" for="cancelReasonInput">Reason for cancellation (optional):</label>
+        <input type="text" id="cancelReasonInput" class="form-input" placeholder="e.g. Rescheduled, Client cancelled, Moved online">
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeCancelModal()">Keep Booking</button>
+      <button type="button" class="btn btn-danger" onclick="confirmCancelBooking()">
+        <i class="fa-solid fa-trash"></i> Yes, Cancel Slot
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notifications Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Application Logic -->
+<script src="js/app.js"></script>
+</body>
+</html>
